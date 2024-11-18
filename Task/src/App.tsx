@@ -1,5 +1,6 @@
 import './App.css';
 import './assets/inputStyling.css';
+import './assets/responsive.css';
 import Switch from './components/switch';
 import {useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -55,6 +56,7 @@ function App() {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedSessionNumber, setSelectedSessionNumber] = useState<number>(0);
   const [advancePayEnabled, setAdvancePayEnabled] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   //form handling using react hook form 
   const {register,handleSubmit,formState:{errors},watch,setValue,}=useForm<FormData>({
@@ -120,9 +122,10 @@ function App() {
 
   
   return (
-    <main>
+    <>
+    <section>
     <button className="langChangeBtn" onClick={()=> changeLanguage(isRtl ? 'en':'ar')}>{isRtl ? <Flag code="GB" />  :<Flag code="AE" /> }</button>
-      <form onSubmit={handleSubmit(onSubmit)} id="form">
+      <form  onSubmit={handleSubmit(onSubmit)} id="form">
         <div id="inputContainer">
           <div>
             <h1 id="formHeading">{t('heading')}</h1>
@@ -132,29 +135,45 @@ function App() {
           <label htmlFor="loginNumber" className="inputLabels">{t('loginPhone')}</label>
           <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>التلميذ</u>)</b>:<b> (preferably the <u>student's</u>)</b>}</p>
           </div>
-          {/* <input type="number" name="loginPhone" className="numberInput formInput" /> */}
-          <PhoneInput isRtl={isRtl} />
+          <PhoneInput 
+          isRtl={isRtl} 
+          name="loginPhone" 
+          value={watch('loginPhone') || ''} 
+          onChange={(value)=>{setValue('loginPhone', value);}} 
+          error={errors.loginPhone?.message} 
+          />
           <div>
           <label htmlFor="contactNumber" className="inputLabels">{t('contactPhone')}</label>
           <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>الأب</u>)</b>:<b> (preferably the <u>parent's</u>)</b>}</p>
           </div>
           {/* <input type="number" name="contactNumber" className="numberInput formInput" /> */}
-          <PhoneInput isRtl={isRtl} />
+          <PhoneInput 
+          isRtl={isRtl} 
+          name="contactPhone" 
+          value={watch('contactPhone') || ''} 
+          onChange={(value)=>{setValue('contactPhone', value);}} 
+          error={errors.loginPhone?.message} 
+          />
           <div>
           <label htmlFor="email" className="inputLabels">{t('contactEmail')}</label>
           <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>الأب</u>)</b>:<b> (preferably the <u>parent's</u>)</b>}</p>
           </div>
           <input {...register('contactEmail')} type="email"  className="textInput formInput" />
+          {errors.contactEmail && <span className="error">{errors.contactEmail.message}</span>}
           <label htmlFor="contactName" className="inputLabels">{t('contactName')}</label>
           <input {...register('contactName')} type="text" className="textInput formInput"  />
+          {errors.contactName && <span className="error">{errors.contactName.message}</span>}
           <label htmlFor="billingAdress" className="inputLabels">{t('billingAddress')}</label>
           <div id="billingAdressContainer">
             <div id="billingAdressRow1">
               <input {...register('adress')} type="text"  id="adress" className="adressInput" placeholder={isRtl ? 'العنوان':'Address'} />
+              {errors.adress && <span className="error">{errors.adress.message}</span>}
               <input {...register('adressNr')} type="text"  id="adressX " className="adressInput" placeholder={isRtl ? 'مم':'Nr'} />
+              {errors.adressNr && <span className="error">{errors.adressNr.message}</span>}
             </div>
             <div id="billingAdressRow2">
               <input {...register('adressPostalCode')} type="text"  className="adressInput" placeholder={isRtl ? 'الرمز البريدي':'Postal Code'} />
+              {errors.adressPostalCode && <span className="error">{errors.adressPostalCode.message}</span>}
               <input {...register('adressCity')}type="text" className="adressInput" placeholder={isRtl ? 'المدينة':'City'} />
               <select 
                 {...register('adressCountry')}
@@ -171,10 +190,11 @@ function App() {
                   </option>
                 ))}
               </select>
+              {errors.adressCountry && <span className="error">{errors.adressCountry.message}</span>}
             </div>
           </div>
           <label htmlFor="monthlySessinos" className="inputLabels">{t('monthlySessions')}</label>
-          <select {...register('monthlySessions'),{valueAsNumber:true}} id="monthlySessions" onChange={(e)=>handleSessionNumberChange(e)} >
+          <select {...register('monthlySessions', {valueAsNumber:true})} id="monthlySessions" onChange={(e)=>handleSessionNumberChange(e)} >
                 <option value="" disabled>
                   {isRtl ? 'عدد الجلسات' : 'No. of Sessions'}
                 </option>
@@ -184,39 +204,43 @@ function App() {
                   </option>
                 ))}
           </select>
+          {errors.monthlySessions && <span className="error">{errors.monthlySessions.message}</span>}
           <div >
             <label className="inputLabels">{t('paymentSelect')}</label>
             <div>
               <div className="methodContainer" onClick={() => handlePaymentChange('sepa')}>
                   <div>
-                    <input type="radio" name="payment" className='methodRadio' checked={selectedPayment === 'sepa'} onChange={() => {}}  />
+                  <input type="radio" {...register('paymentMethod')} value="sepa" className='methodRadio' onChange={() => {handlePaymentChange('sepa')}}/>
                     <img src="./sepa.png" alt="sepa logo" width="50px" />
                   </div>
                   {selectedPayment === 'sepa' && (
                     <div id="methodsInputContainer">
-                      <input type="number" placeholder={isRtl ? "الأيبتم":"IBAN"} className="methodInput" />
-                      <input type="text" placeholder={isRtl ? "صاحب الأكونت":"Account Holder"} className="methodInput"/>
+                      <input {...register('iban')} type="number" placeholder={isRtl ? "الأيبتم":"IBAN"} className="methodInput" />
+                      {errors.iban && <span className="error">{errors.iban.message}</span>}
+                      <input {...register('accountHolder')} type="text" placeholder={isRtl ? "صاحب الأكونت":"Account Holder"} className="methodInput"/>
+                      {errors.accountHolder && <span className="error">{errors.accountHolder.message}</span>}
                     </div>
                   )}
               </div>
               
               <div className="methodContainer" onClick={() => handlePaymentChange('card')}>
                 <div id="cardsInputContainer">
-                  <input type="radio" name="payment" className='methodRadio' checked={selectedPayment === 'sepa'} onChange={() => {}}  />
+                  <input type="radio" {...register('paymentMethod')} className='methodRadio' value='card'  onChange={() => {handlePaymentChange('card')}}  />
                   <img src="./visa.png" alt="visa logo" width="40px" />
                   <img src="./masterCard.png" alt="master card logo" width="40px" />
                   <img src="./American-Express-Logo.png" alt="American Express logo" width="40px" />
                 </div>
                 {selectedPayment === 'card' && (
                   <div id="methodsInputContainer">
-                    <input type="text" placeholder={isRtl ? 'اسم حامل البطاقة':'Card holder'} className="methodInput" />
-                    <input type="text" pattern="^(\d{4}\s){3}\d{4}\s\d{2}\/\d{2}\s\d{3}$" placeholder={isRtl ? "رقم البطاقة           شهر/سنة         الرقم السري":"Card number            mm/yy          cvc"} className="methodInput"/>
+                    <input {...register('cardHolder')} type="text" placeholder={isRtl ? 'اسم حامل البطاقة':'Card holder'} className="methodInput" />
+                    {errors.cardHolder && <span className="error">{errors.cardHolder.message}</span>}
+                    <input {...register('cardNumber')} type="text" maxLength={25} pattern="^(\d{4}\s){3}\d{4}\s\d{2}\/\d{2}\s\d{3}$" placeholder={isRtl ? "رقم البطاقة           شهر/سنة         الرقم السري":"Card number            mm/yy          cvc"} className="methodInput"/>
+                    {errors.cardNumber && <span className="error">{errors.cardNumber.message}</span>}
                   </div>
                 )}
               </div>
             </div>
           </div>
-          {/* <input type="radio" name="paypal" className="paymentMethod" /> */}
           <p id="inputContainerFooter">{t('securePayment',{percent:formatNumber(100)})}</p>
         </div>
         <div id="infoContainer">
@@ -232,8 +256,8 @@ function App() {
               ))}
             </div>
           <div id="advancePaymentContainer">
-            <Switch onChange={handleSwitchChange} />
-            <label> {t('advancePay')} </label>
+            <Switch onChange={handleSwitchChange} isRtl={isRtl} />
+            <label> {t('advancePay',{percent:formatNumber(5)})} </label>
           </div>
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('numberofsessions')}</p>
@@ -248,7 +272,7 @@ function App() {
           <p className='orderInfoValue'>{isRtl ? `${formatNumber(28.40)} درهم`:'28.40$'}</p>
           </div>
           <div className='orderInfoContainer'>
-          <p className='discountText'>{t('discount')}</p>
+          <p className='discountText'>{t('discount',{percent:formatNumber(4)})}</p>
           <p className='discountText big'>{isRtl ? `${formatNumber(-9.60)} درهم`:'-9.60$'}</p>
           </div>
           <div className='break'></div>
@@ -261,18 +285,19 @@ function App() {
           <p className='totalText big'>{isRtl ? `${formatNumber(calculateTotal())} درهم` : `${calculateTotal().toFixed(2)}$`}</p>
           </div>
           <div id="termsContainer">
-          <input type="checkbox" name="terms" id="termsCheckbox" />
-          <label htmlFor="terms" id="termsLabel">{isRtl ?"انا اوافق علي ":"I accept the"} <a href="#">{isRtl ? "الشروط والأحكام":"terms & conditions"}</a> 
-          {isRtl ?"وأفهم ":" and understand"} <a href="#">{isRtl ? "حقي في التراجع":"right of widthdrawal"}</a> 
+          <input type="checkbox" name="terms" id="termsCheckbox" checked={termsAccepted} onChange={(e)=>setTermsAccepted(e.target.checked)}/>
+          <label htmlFor="terms" id="termsLabel">{isRtl ?"انا اوافق علي ":"I accept the"} <a href="#">{isRtl ? "الشروط والأحكام ":" terms & conditions"}</a> 
+          {isRtl ?"وأفهم ":" and understand"} <a href="#">{isRtl ? "حقي في التراجع ":" right of widthdrawal"}</a> 
            {isRtl ?"كذلك الظروف التي تؤدي للمثل ":" as well as the cirumstances that lead to repeal of the same"}
           </label>
           </div>
-          <button type='submit' id="submitButton">{t('orderNow')}</button>
+          <button disabled={!termsAccepted} type='submit' id="submitButton">{t('orderNow')}</button>
           </div>
           <p id="infoContainerFooter">{t('satisfactionRate',{percent:formatNumber(95)})}</p>
         </div>
       </form>
-    </main>
+      </section>
+    </>
   )
 }
 export default App

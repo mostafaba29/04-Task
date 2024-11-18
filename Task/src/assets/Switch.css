@@ -30,4 +30,8 @@
   .switch-toggle-on {
     transform: translateX(21px);
   }
+
+  .switch-toggle-on-arabic {
+    transform: translateX(-21px);
+  }
   

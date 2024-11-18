@@ -22,22 +22,29 @@ const countries: country[] = [
 
 interface PhoneInputProps {
     isRtl:boolean;
+    value:string;
+    onChange:(value:string)=>void;
+    error?:string;
+    name:string;
 }
 
-function PhoneInput ({isRtl}:PhoneInputProps) {
+function PhoneInput ({isRtl, value, onChange, error,name}: PhoneInputProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedCountry, setSelectedCountry] = useState(countries[0]);
-    const [phoneNumber, setPhoneNumber] = useState('');
 
     const handleCountrySelect = (country:country) => {
         setSelectedCountry(country);
         setIsOpen(false);
+        onChange(`${country.prefix}${value.split(')')[1] || ''}`);
     };
 
+
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/[^0-9]/g, '');
-        setPhoneNumber(value);
+        const inputValue = e.target.value.replace(/[^0-9]/g, '');
+        onChange(`${selectedCountry.prefix}${inputValue}`);
     };
+
+    const displayNumber = value ? value.split(')')[1] || '' : '';
 
     return (
         <div className="phone-input-container">
@@ -53,11 +60,12 @@ function PhoneInput ({isRtl}:PhoneInputProps) {
                 </button>
                 <input
                 type="tel"
-                className="phone-input"
-                value={phoneNumber}
+                className={`phone-input ${error ? 'error' : ''}`}
+                value={displayNumber}
                 onChange={handlePhoneChange}
                 />
             </div>
+            {error && <span className="error">{error}</span>}
 
             {isOpen && (
                 <div className="country-dropdown">

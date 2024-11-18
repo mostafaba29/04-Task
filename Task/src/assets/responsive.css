@@ -1,3 +1,4 @@
+/*media quieries to handle viewing the form in smaller screens by modifying the form to be in one column instead of dividing on larger screens*/
 @media (max-width: 767.98px) {
     form {
         width: 80%;

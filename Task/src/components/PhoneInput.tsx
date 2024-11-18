@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import { ChevronDown } from 'lucide-react';
 import Flag from 'react-world-flags';
 import '../assets/phoneInput.css';
@@ -8,7 +8,9 @@ type country = {
     nameEn: string;
     nameAr: string;
     prefix: string;
-  };
+};
+
+//country list that can be extended  note:[code from react-world-flags library for flag icons]
 const countries: country[] = [
     { code: 'GR', nameEn: 'Greece',nameAr:'اليونان', prefix: '+30' },
     { code: 'US', nameEn: 'United States',nameAr:'الولايات المتحدة الأمريكية',prefix: '+1' },
@@ -18,72 +20,87 @@ const countries: country[] = [
     { code:'AE', nameEn: 'United Arab Emirates',nameAr:'الإمارات العربية المتحدة' ,prefix: '+971'},
     { code:'SA',nameEn:'Saudi Arabia', nameAr:'المملكة العربية السعودية' ,prefix: '+966'},
     { code:'EG',nameEn:'Egypt', nameAr:'مصر' ,prefix: '+20'},
-  ];
+];
 
 interface PhoneInputProps {
-    isRtl:boolean;
-    value:string;
-    onChange:(value:string)=>void;
-    error?:string;
-    name:string;
+    isRtl: boolean;
+    value: string;
+    onChange: (value: string) => void;
+    error?: string;
+    name: string;
 }
 
-function PhoneInput ({isRtl, value, onChange, error,name}: PhoneInputProps) {
+function PhoneInput({isRtl, value, onChange, error, name}: PhoneInputProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedCountry, setSelectedCountry] = useState(countries[0]);
+    const [localValue, setLocalValue] = useState('');
 
-    const handleCountrySelect = (country:country) => {
+    // Initialize the component with the provided value
+    useEffect(() => {
+        if (value) {
+            // Find the country prefix from the value
+            const country = countries.find(c => value.startsWith(c.prefix));
+            if (country) {
+                setSelectedCountry(country);
+                setLocalValue(value.slice(country.prefix.length));
+            }
+        }
+    }, []);
+
+    const handleCountrySelect = (country: country) => {
         setSelectedCountry(country);
         setIsOpen(false);
-        onChange(`${country.prefix}${value.split(')')[1] || ''}`);
+        const newValue = `${country.prefix}${localValue}`;
+        onChange(newValue);
     };
-
 
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.replace(/[^0-9]/g, '');
-        onChange(`${selectedCountry.prefix}${inputValue}`);
+        setLocalValue(inputValue);
+        const newValue = `${selectedCountry.prefix}${inputValue}`;
+        onChange(newValue);
     };
-
-    const displayNumber = value ? value.split(')')[1] || '' : '';
 
     return (
         <div className="phone-input-container">
             <div className="phone-input-wrapper">
                 <button
-                type='button'
-                className="country-selector"
-                onClick={() => setIsOpen(!isOpen)}
+                    type="button"
+                    className="country-selector"
+                    onClick={() => setIsOpen(!isOpen)}
                 >
-                <Flag code={selectedCountry.code} height={10}/>
-                <span className="country-prefix">{selectedCountry.prefix}</span>
-                <ChevronDown className="chevron-icon" />
+                    <Flag code={selectedCountry.code} height={10}/>
+                    <span className="country-prefix">{selectedCountry.prefix}</span>
+                    <ChevronDown className="chevron-icon" />
                 </button>
                 <input
-                type="tel"
-                className={`phone-input ${error ? 'error' : ''}`}
-                value={displayNumber}
-                onChange={handlePhoneChange}
+                    type="tel"
+                    name={name}
+                    className={`phone-input ${error ? 'error' : ''}`}
+                    value={localValue}
+                    onChange={handlePhoneChange}
                 />
             </div>
             {error && <span className="error">{error}</span>}
 
             {isOpen && (
                 <div className="country-dropdown">
-                {countries.map((country) => (
-                    <button
-                    key={country.code}
-                    className="country-option"
-                    onClick={() => handleCountrySelect(country)}
-                    >
-                    <Flag code={country.code} height={10} />
-                    <span className="country-name">{isRtl ? country.nameAr : country.nameEn}</span>
-                    <span className="country-prefix-option">{country.prefix}</span>
-                    </button>
-                ))}
+                    {countries.map((country) => (
+                        <button
+                            type="button"
+                            key={country.code}
+                            className="country-option"
+                            onClick={() => handleCountrySelect(country)}
+                        >
+                            <Flag code={country.code} height={10} />
+                            <span className="country-name">{isRtl ? country.nameAr : country.nameEn}</span>
+                            <span className="country-prefix-option">{country.prefix}</span>
+                        </button>
+                    ))}
                 </div>
             )}
         </div>
-    )
+    );
 }
 
 export default PhoneInput;

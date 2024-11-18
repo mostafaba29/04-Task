@@ -2,7 +2,7 @@ import './App.css';
 import './assets/inputStyling.css';
 import './assets/responsive.css';
 import Switch from './components/switch';
-import {useState} from 'react';
+import {useState,useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import i18n from 'i18next';
 import Flag from 'react-world-flags';
@@ -58,12 +58,21 @@ function App() {
   const [advancePayEnabled, setAdvancePayEnabled] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+
   //form handling using react hook form 
   const {register,handleSubmit,formState:{errors},watch,setValue,}=useForm<FormData>({
       resolver:zodResolver(formSchema),
   })
 
-  const selectedPaymentMethod = watch('paymentMethod');
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name === 'paymentMethod') {
+        setSelectedPayment(value.paymentMethod || '');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
 
   //sumbission logic using axios 
   const onSubmit = async (data:FormData)=>{
@@ -74,6 +83,19 @@ function App() {
     }
   }
 
+  //helper function to render custom phone input
+  const renderPhoneInput = (name: 'loginPhone' | 'contactPhone') => {
+    return (
+      <PhoneInput 
+        isRtl={isRtl} 
+        name={name}
+        value={watch(name) || ''}
+        onChange={(value: string) => setValue(name, value)}
+        error={errors[name]?.message}
+      />
+    )
+  }
+
   //event handlers
   const changeLanguage = (language: string)=>{
     i18n.changeLanguage(language);
@@ -82,10 +104,12 @@ function App() {
 
   const handlePaymentChange = (method: 'sepa' | 'card') => {
     setValue('paymentMethod', method);
+    setSelectedPayment(method);
   };
 
   const handleMonthChange = (month:string) => {
     setValue('selectedMonth', month);
+    setSelectedMonth(month);
   };
 
   const handleSwitchChange = (isOn: boolean) => {
@@ -124,46 +148,42 @@ function App() {
   return (
     <>
     <section>
+    {/* button shaped as flags to change between languages for the form*/ }
     <button className="langChangeBtn" onClick={()=> changeLanguage(isRtl ? 'en':'ar')}>{isRtl ? <Flag code="GB" />  :<Flag code="AE" /> }</button>
       <form  onSubmit={handleSubmit(onSubmit)} id="form">
+        {/* first part of the form containing most of the input data required from the user*/ }
         <div id="inputContainer">
+          {/* heading*/ }
           <div>
             <h1 id="formHeading">{t('heading')}</h1>
             <p id="formSubHeading">{t('subHeading')}</p>
           </div>
+          {/* nubmer inputs*/ }
           <div>
           <label htmlFor="loginNumber" className="inputLabels">{t('loginPhone')}</label>
           <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>التلميذ</u>)</b>:<b> (preferably the <u>student's</u>)</b>}</p>
           </div>
-          <PhoneInput 
-          isRtl={isRtl} 
-          name="loginPhone" 
-          value={watch('loginPhone') || ''} 
-          onChange={(value)=>{setValue('loginPhone', value);}} 
-          error={errors.loginPhone?.message} 
-          />
+          {renderPhoneInput('loginPhone')}
           <div>
           <label htmlFor="contactNumber" className="inputLabels">{t('contactPhone')}</label>
           <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>الأب</u>)</b>:<b> (preferably the <u>parent's</u>)</b>}</p>
           </div>
-          {/* <input type="number" name="contactNumber" className="numberInput formInput" /> */}
-          <PhoneInput 
-          isRtl={isRtl} 
-          name="contactPhone" 
-          value={watch('contactPhone') || ''} 
-          onChange={(value)=>{setValue('contactPhone', value);}} 
-          error={errors.loginPhone?.message} 
-          />
+          {renderPhoneInput('contactPhone')}
           <div>
+          {/* email and contact inputs*/ }
           <label htmlFor="email" className="inputLabels">{t('contactEmail')}</label>
           <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>الأب</u>)</b>:<b> (preferably the <u>parent's</u>)</b>}</p>
           </div>
           <input {...register('contactEmail')} type="email"  className="textInput formInput" />
           {errors.contactEmail && <span className="error">{errors.contactEmail.message}</span>}
+
           <label htmlFor="contactName" className="inputLabels">{t('contactName')}</label>
           <input {...register('contactName')} type="text" className="textInput formInput"  />
           {errors.contactName && <span className="error">{errors.contactName.message}</span>}
+
+          {/* billing adress inputs*/ }
           <label htmlFor="billingAdress" className="inputLabels">{t('billingAddress')}</label>
+
           <div id="billingAdressContainer">
             <div id="billingAdressRow1">
               <input {...register('adress')} type="text"  id="adress" className="adressInput" placeholder={isRtl ? 'العنوان':'Address'} />
@@ -171,6 +191,7 @@ function App() {
               <input {...register('adressNr')} type="text"  id="adressX " className="adressInput" placeholder={isRtl ? 'مم':'Nr'} />
               {errors.adressNr && <span className="error">{errors.adressNr.message}</span>}
             </div>
+
             <div id="billingAdressRow2">
               <input {...register('adressPostalCode')} type="text"  className="adressInput" placeholder={isRtl ? 'الرمز البريدي':'Postal Code'} />
               {errors.adressPostalCode && <span className="error">{errors.adressPostalCode.message}</span>}
@@ -193,6 +214,8 @@ function App() {
               {errors.adressCountry && <span className="error">{errors.adressCountry.message}</span>}
             </div>
           </div>
+
+          {/* no of sessions and monthly sessions input*/ }
           <label htmlFor="monthlySessinos" className="inputLabels">{t('monthlySessions')}</label>
           <select {...register('monthlySessions', {valueAsNumber:true})} id="monthlySessions" onChange={(e)=>handleSessionNumberChange(e)} >
                 <option value="" disabled>
@@ -205,6 +228,8 @@ function App() {
                 ))}
           </select>
           {errors.monthlySessions && <span className="error">{errors.monthlySessions.message}</span>}
+
+          {/* payment method selection */ }
           <div >
             <label className="inputLabels">{t('paymentSelect')}</label>
             <div>
@@ -241,11 +266,19 @@ function App() {
               </div>
             </div>
           </div>
+
+          {/* frist part footer*/ }
           <p id="inputContainerFooter">{t('securePayment',{percent:formatNumber(100)})}</p>
         </div>
+
+
+        {/* second part of the form containing info about the payment operation , total cost and monthly options*/ }
         <div id="infoContainer">
           <div>
+            {/* heading*/ }
             <h3>{t('orderOverview')}</h3>
+
+            {/* montly options selection*/ }
             <div id="monthSelectionContainer">
               {[6, 9, 12, 18, 24, 36].map((month) => (
                 <button key={month} type="button" className={`selectionBtn ${selectedMonth === month.toString()? 'selectedBtn': ''}`}
@@ -255,35 +288,52 @@ function App() {
                 </button>
               ))}
             </div>
+
+          {/* toggle for payment in advance and applying a discount*/ }
           <div id="advancePaymentContainer">
             <Switch onChange={handleSwitchChange} isRtl={isRtl} />
             <label> {t('advancePay',{percent:formatNumber(5)})} </label>
           </div>
+
+          {/* payment info section */ }
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('numberofsessions')}</p>
           <p className='orderInfoValue'>{selectedSessionNumber}</p>
           </div>
+
+
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('regularPrice')}</p>
           <p className='orderInfoValue strike'>{isRtl ?`${formatNumber(29.60)} درهم`:'29.60$'}</p>
           </div>
+
+
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('yourPrice')}</p>
           <p className='orderInfoValue'>{isRtl ? `${formatNumber(28.40)} درهم`:'28.40$'}</p>
           </div>
+
+
           <div className='orderInfoContainer'>
           <p className='discountText'>{t('discount',{percent:formatNumber(4)})}</p>
           <p className='discountText big'>{isRtl ? `${formatNumber(-9.60)} درهم`:'-9.60$'}</p>
           </div>
+
+
           <div className='break'></div>
+
+          {/* total section*/ }
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('setupFee')}</p>
           <p className='totalText big'>{isRtl ? `${formatNumber(0.00)} درهم`:'0.00$'}</p>
           </div>
+
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('Total')}</p>
           <p className='totalText big'>{isRtl ? `${formatNumber(calculateTotal())} درهم` : `${calculateTotal().toFixed(2)}$`}</p>
           </div>
+
+          {/* terms and conditions must be accepted in order to proceed*/ }
           <div id="termsContainer">
           <input type="checkbox" name="terms" id="termsCheckbox" checked={termsAccepted} onChange={(e)=>setTermsAccepted(e.target.checked)}/>
           <label htmlFor="terms" id="termsLabel">{isRtl ?"انا اوافق علي ":"I accept the"} <a href="#">{isRtl ? "الشروط والأحكام ":" terms & conditions"}</a> 
@@ -291,8 +341,12 @@ function App() {
            {isRtl ?"كذلك الظروف التي تؤدي للمثل ":" as well as the cirumstances that lead to repeal of the same"}
           </label>
           </div>
+
+          {/* submit button*/ }
           <button disabled={!termsAccepted} type='submit' id="submitButton">{t('orderNow')}</button>
           </div>
+
+          {/* second part footer*/ }
           <p id="infoContainerFooter">{t('satisfactionRate',{percent:formatNumber(95)})}</p>
         </div>
       </form>

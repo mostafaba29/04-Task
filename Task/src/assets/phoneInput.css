@@ -1,3 +1,6 @@
+/*style file for the custom phone input to alllow for side by side phone dropdown menu and the number itself*/
+
+
 .phone-input-container {
     width: 100%;
   }
@@ -11,7 +14,9 @@
     background: white;
   }
   
-  .country-selector {
+
+/*style for the dropdown menu*/
+.country-selector {
     display: flex;
     align-items: center;
     padding: 10px 12px;
@@ -22,36 +27,24 @@
     background-color: #f1f1f1;
   }
   
-  .country-selector:hover {
+.country-selector:hover {
     background: #bebebe;
   }
   
-  .country-prefix {
+.country-prefix {
     margin: 0 8px;
     color: #000000;
     font-size: 14px;
   }
   
-  .chevron-icon {
+.chevron-icon {
     width: 16px;
     height: 16px;
     color: #303030;
   }
   
-  .phone-input {
-    padding: 10px 12px;
-    background-color: #f1f1f1;
-    border:none;
-    margin:0px;
-    width: 100%;
-    color:#000000;
-  }
-
-  .phone-input:focus {
-    outline: none;
-  }
    
-  .country-dropdown {
+.country-dropdown {
     position:relative;
     z-index: 50;
     top: 0;
@@ -65,7 +58,7 @@
     z-index: 1000;
   }
   
-  .country-option {
+.country-option {
     display: flex;
     align-items: center;
     width: 100%;
@@ -76,18 +69,32 @@
     text-align: left;
   }
   
-  .country-option:hover {
+.country-option:hover {
     background: #f5f5f5;
   }
   
-  .country-name {
+.country-name {
     margin-left: 8px;
     flex: 1;
     font-size: 14px;
     color: #333;
   }
   
-  .country-prefix-option {
+.country-prefix-option {
     color: #666;
     font-size: 14px;
+  }
+
+  /* style for the number input itself */
+  .phone-input {
+    padding: 10px 12px;
+    background-color: #f1f1f1;
+    border:none;
+    margin:0px;
+    width: 100%;
+    color:#000000;
+  }
+
+.phone-input:focus {
+    outline: none;
   }

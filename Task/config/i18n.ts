@@ -5,6 +5,9 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import enTranslation from '../locales/enTranslation.json';
 import arTranslation from '../locales/arTranslation.json';
 
+export const formatToArabicNumber = (number:number)=>{
+    return new Intl.NumberFormat('ar-EG').format(number);
+}
 
 i18n.use(LanguageDetector)
     .use(initReactI18next)
@@ -13,7 +16,22 @@ i18n.use(LanguageDetector)
             en:{translation:enTranslation},
             ar:{translation:arTranslation},
         },
+        lng: 'ar',
         fallbackLng:'en',
+        interpolation: {
+            escapeValue: false,
+            format: (value, format) => {
+              if (format === 'number' || typeof value === 'number') {
+                return formatToArabicNumber(value);
+              }
+              return value;
+            }}
     });
 
+export const useArabicNumber = () => {
+  return {
+    formatNumber: formatToArabicNumber
+  };
+};
+   
 export default i18n;

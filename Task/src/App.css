@@ -15,10 +15,14 @@ form {
 }
 
 .langChangeBtn {
-  width:100px;
+  width:60px;
   height: 40px;
-  background-color: rgb(114, 35, 35);
-  color:white;
+  border:none;
+  background:none;
+}
+
+.langChangeBtn:hover {
+  cursor: pointer;
 }
 
 #inputContainer {
@@ -129,6 +133,7 @@ form {
   padding: 14px 10px;
   box-sizing: border-box;
   background-color: #f1f1f1;
+  color:#646464;
   border:none;
   width: 100%;
   margin:10px 0px;;

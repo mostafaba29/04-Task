@@ -4,10 +4,19 @@ import Switch from './components/switch';
 import {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import i18n from 'i18next';
+import Flag from 'react-world-flags';
+import PhoneInput from './components/PhoneInput';
+import {useArabicNumber} from '../config/i18n';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import axios from 'axios';
+
 function App() {
   //importing translations and locale 
   const {t} = useTranslation();
   const isRtl = i18n.language === 'ar'; 
+  const {formatNumber} = useArabicNumber();
 
   //state managment
   const [selectedPayment, setSelectedPayment] = useState('');
@@ -38,6 +47,11 @@ function App() {
       setSelectedSessionNumber(value);
   };
 
+  //calculation function 
+  const calculateTotal = () => {
+    return selectedSessionNumber * 28.40;
+  };
+
   //data
   const countries = [
     { code: 'DE', name: isRtl ? 'ألمانيا' : 'Germany' },
@@ -55,10 +69,11 @@ function App() {
     { value: 12, label: isRtl ?'إثنا عشر جلسة':'12 sessions' },
   ];
 
+
   
   return (
     <main>
-    <button className="langChangeBtn" onClick={()=> changeLanguage(isRtl ? 'en':'ar')}>{isRtl ? 'EN':'AR'}</button>
+    <button className="langChangeBtn" onClick={()=> changeLanguage(isRtl ? 'en':'ar')}>{isRtl ? <Flag code="GB" />  :<Flag code="AE" /> }</button>
       <form action="submit" id="form">
         <div id="inputContainer">
           <div>
@@ -67,17 +82,19 @@ function App() {
           </div>
           <div>
           <label htmlFor="loginNumber" className="inputLabels">{t('loginPhone')}</label>
-          <p className='labelSublement'><b> (preferably the <u>student's</u>)</b></p>
+          <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>التلميذ</u>)</b>:<b> (preferably the <u>student's</u>)</b>}</p>
           </div>
-          <input type="number" name="loginPhone" className="numberInput formInput" />
+          {/* <input type="number" name="loginPhone" className="numberInput formInput" /> */}
+          <PhoneInput isRtl={isRtl} />
           <div>
           <label htmlFor="contactNumber" className="inputLabels">{t('contactPhone')}</label>
-          <p className='labelSublement'><b> (preferably the <u>parent's</u>)</b></p>
+          <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>الأب</u>)</b>:<b> (preferably the <u>parent's</u>)</b>}</p>
           </div>
-          <input type="number" name="contactNumber" className="numberInput formInput" />
+          {/* <input type="number" name="contactNumber" className="numberInput formInput" /> */}
+          <PhoneInput isRtl={isRtl} />
           <div>
           <label htmlFor="email" className="inputLabels">{t('contactEmail')}</label>
-          <p className='labelSublement'><b> (preferably the <u>parent's</u>)</b></p>
+          <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>الأب</u>)</b>:<b> (preferably the <u>parent's</u>)</b>}</p>
           </div>
           <input type="email" name="email" className="textInput formInput" />
           <label htmlFor="contactName" className="inputLabels">{t('contactName')}</label>
@@ -114,7 +131,7 @@ function App() {
                   {isRtl ? 'عدد الجلسات' : 'No. of Sessions'}
                 </option>
                 {sessionsNumber.map((session)=>(
-                  <option key={session.value} value={session.label}>
+                  <option key={session.value} value={session.value}>
                     {session.label}
                   </option>
                 ))}
@@ -129,8 +146,8 @@ function App() {
                   </div>
                   {selectedPayment === 'sepa' && (
                     <div id="methodsInputContainer">
-                      <input type="text" placeholder="IBAN" className="methodInput" />
-                      <input type="text" placeholder="Account Holder"className="methodInput"/>
+                      <input type="number" placeholder={isRtl ? "الأيبتم":"IBAN"} className="methodInput" />
+                      <input type="text" placeholder={isRtl ? "صاحب الأكونت":"Account Holder"} className="methodInput"/>
                     </div>
                   )}
               </div>
@@ -144,15 +161,15 @@ function App() {
                 </div>
                 {selectedPayment === 'card' && (
                   <div id="methodsInputContainer">
-                    <input type="text" placeholder="Card Number" className="methodInput" />
-                    <input type="text" placeholder="Card number mm/yy cvc"className="methodInput"/>
+                    <input type="text" placeholder={isRtl ? 'اسم حامل البطاقة':'Card holder'} className="methodInput" />
+                    <input type="text" pattern="^(\d{4}\s){3}\d{4}\s\d{2}\/\d{2}\s\d{3}$" placeholder={isRtl ? "رقم البطاقة           شهر/سنة         الرقم السري":"Card number            mm/yy          cvc"} className="methodInput"/>
                   </div>
                 )}
               </div>
             </div>
           </div>
           {/* <input type="radio" name="paypal" className="paymentMethod" /> */}
-          <p id="inputContainerFooter">{t('securePayment')}</p>
+          <p id="inputContainerFooter">{t('securePayment',{percent:formatNumber(100)})}</p>
         </div>
         <div id="infoContainer">
           <div>
@@ -162,7 +179,7 @@ function App() {
                 <button key={month} type="button" className={`selectionBtn ${selectedMonth === month.toString()? 'selectedBtn': ''}`}
                   onClick={() => handleMonthChange(month.toString())}
                 >
-                  {month} {t('months')}
+                  {t(`${month}month`,{number:formatNumber(month)})}
                 </button>
               ))}
             </div>
@@ -176,24 +193,24 @@ function App() {
           </div>
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('regularPrice')}</p>
-          <p className='orderInfoValue strike'>{isRtl ?'29.60 درهم':'29.60$'}</p>
+          <p className='orderInfoValue strike'>{isRtl ?`${formatNumber(29.60)} درهم`:'29.60$'}</p>
           </div>
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('yourPrice')}</p>
-          <p className='orderInfoValue'>{isRtl ? '28.40 درهم':'28.40$'}</p>
+          <p className='orderInfoValue'>{isRtl ? `${formatNumber(28.40)} درهم`:'28.40$'}</p>
           </div>
           <div className='orderInfoContainer'>
           <p className='discountText'>{t('discount')}</p>
-          <p className='discountText big'>{isRtl ? '-9.60 درهم':'-9.60$'}</p>
+          <p className='discountText big'>{isRtl ? `${formatNumber(-9.60)} درهم`:'-9.60$'}</p>
           </div>
           <div className='break'></div>
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('setupFee')}</p>
-          <p className='totalText big'>{isRtl ? '0.00 درهم':'0.00$'}</p>
+          <p className='totalText big'>{isRtl ? `${formatNumber(0.00)} درهم`:'0.00$'}</p>
           </div>
           <div className='orderInfoContainer'>
           <p className="orderInfoText">{t('Total')}</p>
-          <p className='totalText big'>total</p>
+          <p className='totalText big'>{isRtl ? `${formatNumber(calculateTotal())} درهم` : `${calculateTotal().toFixed(2)}$`}</p>
           </div>
           <div id="termsContainer">
           <input type="checkbox" name="terms" id="termsCheckbox" />
@@ -204,7 +221,7 @@ function App() {
           </div>
           <button type='submit' id="submitButton">{t('orderNow')}</button>
           </div>
-          <p id="infoContainerFooter">{t('satisfactionRate')}</p>
+          <p id="infoContainerFooter">{t('satisfactionRate',{percent:formatNumber(95)})}</p>
         </div>
       </form>
     </main>

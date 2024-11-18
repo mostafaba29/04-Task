@@ -1,0 +1,18 @@
+.methodRadio {
+    appearance: none; 
+    -webkit-appearance: none;
+    -moz-appearance: none; 
+    background-color: white;
+    border: 2px solid #ccc; 
+    width: 20px; 
+    height: 20px; 
+    border-radius: 50%; 
+    cursor: pointer;
+    position: relative; 
+    transition: background-color 0.3s, border-color 0.3s; 
+  }
+
+.methodRadio:checked {
+    background-color: rgb(43, 143, 189); 
+    padding:1px;
+}

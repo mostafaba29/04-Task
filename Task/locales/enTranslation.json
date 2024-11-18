@@ -23,8 +23,9 @@
     "numberofsessions":"NUMBER OF SESSIONS P.M.",
     "regularPrice":"REGULAR PRICE",
     "yourPrice":"YOUR PRICE",
-    "discount":"DISCOUNT",
+    "discount":"DISCOUNT 4%",
     "setupFee":"Setup fee",
     "Total":"TOTAL P.M.",
-    "orderNow":"ORDER NOW"
+    "orderNow":"Order Now",
+    "satisfactionRate":"95% SATISFACTION RATE"
 }

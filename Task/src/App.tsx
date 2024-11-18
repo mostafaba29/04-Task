@@ -12,7 +12,39 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import axios from 'axios';
 
+//form schema using zod for validation and error handling
+const formSchema = z.object({
+  loginPhone:z.string().min(10, {message: 'Please enter a valid phone number'}),
+  contactPhone:z.string().min(10, { message: 'Please enter a valid phone number' }),
+  contactEmail:z.string().email({ message: 'Please enter a valid email address' }),
+  contactName:z.string().min(1, { message: 'Please enter a valid name' }),
+  adress:z.string().min(1, { message: 'Please enter a valid address' }),
+  adressNr:z.string().min(1, { message: 'Please enter a valid address number' }),
+  adressCity:z.string().min(1, { message: 'Please enter a valid city' }),
+  adressPostalCode:z.string().min(1, { message: 'Please enter a valid postal code' }),
+  adressCountry:z.string().min(1, { message: 'Please enter a valid country' }),
+  monthlySessions:z.string().min(1, { message: 'Please enter a valid number of sessions' }),
+  paymentMethod:z.enum(['sepa','card']),
+  iban: z.string().optional().refine(val => !val || val.length >= 15, {
+    message: 'Invalid IBAN',
+  }),
+  accountHolder: z.string().optional().refine(val => !val || val.length >= 2, {
+    message: 'Account holder name required',
+  }),
+  cardHolder: z.string().optional().refine(val => !val || val.length >= 2, {
+    message: 'Card holder name required',
+  }),
+  cardNumber: z.string().optional().refine(val => !val || val.length >= 16, {
+    message: 'Invalid card number',
+  }),
+  selectedMonth:z.string().min(1, { message: 'Please select a month' }),
+})
+
+type FormData=z.infer<typeof formSchema>;
+
+
 function App() {
+
   //importing translations and locale 
   const {t} = useTranslation();
   const isRtl = i18n.language === 'ar'; 
@@ -24,18 +56,34 @@ function App() {
   const [selectedSessionNumber, setSelectedSessionNumber] = useState<number>(0);
   const [advancePayEnabled, setAdvancePayEnabled] = useState(false);
 
+  //form handling using react hook form 
+  const {register,handleSubmit,formState:{errors},watch,setValue,}=useForm<FormData>({
+      resolver:zodResolver(formSchema),
+  })
+
+  const selectedPaymentMethod = watch('paymentMethod');
+
+  //sumbission logic using axios 
+  const onSubmit = async (data:FormData)=>{
+    try{
+      const response = await axios.post('https://webisite.com/purchase-form',data);
+    }catch(error){
+      console.error('Error submitting form:',error);
+    }
+  }
+
   //event handlers
   const changeLanguage = (language: string)=>{
     i18n.changeLanguage(language);
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
   }
 
-  const handlePaymentChange = (method: string) => {
-    setSelectedPayment(method);
+  const handlePaymentChange = (method: 'sepa' | 'card') => {
+    setValue('paymentMethod', method);
   };
 
   const handleMonthChange = (month:string) => {
-    setSelectedMonth(month);
+    setValue('selectedMonth', month);
   };
 
   const handleSwitchChange = (isOn: boolean) => {
@@ -74,7 +122,7 @@ function App() {
   return (
     <main>
     <button className="langChangeBtn" onClick={()=> changeLanguage(isRtl ? 'en':'ar')}>{isRtl ? <Flag code="GB" />  :<Flag code="AE" /> }</button>
-      <form action="submit" id="form">
+      <form onSubmit={handleSubmit(onSubmit)} id="form">
         <div id="inputContainer">
           <div>
             <h1 id="formHeading">{t('heading')}</h1>
@@ -96,20 +144,20 @@ function App() {
           <label htmlFor="email" className="inputLabels">{t('contactEmail')}</label>
           <p className='labelSublement'>{isRtl ? <b>(يفضل أن يكون <u>الأب</u>)</b>:<b> (preferably the <u>parent's</u>)</b>}</p>
           </div>
-          <input type="email" name="email" className="textInput formInput" />
+          <input {...register('contactEmail')} type="email"  className="textInput formInput" />
           <label htmlFor="contactName" className="inputLabels">{t('contactName')}</label>
-          <input type="text" name="contactName" className="textInput formInput"  />
+          <input {...register('contactName')} type="text" className="textInput formInput"  />
           <label htmlFor="billingAdress" className="inputLabels">{t('billingAddress')}</label>
           <div id="billingAdressContainer">
             <div id="billingAdressRow1">
-              <input type="text" name="Adress" id="adress" className="adressInput" placeholder={isRtl ? 'العنوان':'Address'} />
-              <input type="text" name="AdressX" id="adressX " className="adressInput" placeholder={isRtl ? 'مم':'Nr'} />
+              <input {...register('adress')} type="text"  id="adress" className="adressInput" placeholder={isRtl ? 'العنوان':'Address'} />
+              <input {...register('adressNr')} type="text"  id="adressX " className="adressInput" placeholder={isRtl ? 'مم':'Nr'} />
             </div>
             <div id="billingAdressRow2">
-              <input type="text" name="postalCode" className="adressInput" placeholder={isRtl ? 'الرمز البريدي':'Postal Code'} />
-              <input type="text" name="city" className="adressInput" placeholder={isRtl ? 'المدينة':'City'} />
+              <input {...register('adressPostalCode')} type="text"  className="adressInput" placeholder={isRtl ? 'الرمز البريدي':'Postal Code'} />
+              <input {...register('adressCity')}type="text" className="adressInput" placeholder={isRtl ? 'المدينة':'City'} />
               <select 
-                name="country" 
+                {...register('adressCountry')}
                 className="adressInput"
                 defaultValue=""
                 required
@@ -126,7 +174,7 @@ function App() {
             </div>
           </div>
           <label htmlFor="monthlySessinos" className="inputLabels">{t('monthlySessions')}</label>
-          <select name="monthlySessions" id="monthlySessions" onChange={(e)=>handleSessionNumberChange(e)} >
+          <select {...register('monthlySessions'),{valueAsNumber:true}} id="monthlySessions" onChange={(e)=>handleSessionNumberChange(e)} >
                 <option value="" disabled>
                   {isRtl ? 'عدد الجلسات' : 'No. of Sessions'}
                 </option>
